@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
   StyleSheet,
   SafeAreaView,
@@ -18,6 +18,7 @@ import Uploads from './examples/Uploads';
 import Injection from './examples/Injection';
 import LocalPageLoad from './examples/LocalPageLoad';
 import Messaging from './examples/Messaging';
+import GetCookies from './examples/GetCookies';
 
 const TESTS = {
   Messaging: {
@@ -84,10 +85,18 @@ const TESTS = {
       return <LocalPageLoad />;
     },
   },
+  GetCookies: {
+    title: 'GetCookies',
+    testId: 'GetCookies',
+    description: 'get cookies test',
+    render() {
+      return <GetCookies />;
+    },
+  },
 };
 
 type Props = {};
-type State = {restarting: boolean; currentTest: Object};
+type State = { restarting: boolean; currentTest: Object };
 
 export default class App extends Component<Props, State> {
   state = {
@@ -96,15 +105,15 @@ export default class App extends Component<Props, State> {
   };
 
   _simulateRestart = () => {
-    this.setState({restarting: true}, () => this.setState({restarting: false}));
+    this.setState({ restarting: true }, () => this.setState({ restarting: false }));
   };
 
   _changeTest = (testName) => {
-    this.setState({currentTest: TESTS[testName]});
+    this.setState({ currentTest: TESTS[testName] });
   };
 
   render() {
-    const {restarting, currentTest} = this.state;
+    const { restarting, currentTest } = this.state;
     return (
       <SafeAreaView style={styles.container}>
         <TouchableOpacity
@@ -159,6 +168,13 @@ export default class App extends Component<Props, State> {
               testID="testType_uploads"
               title="Uploads"
               onPress={() => this._changeTest('Uploads')}
+            />
+          )}
+          {Platform.OS === 'android' && (
+            <Button
+              testID="testType_getCookies"
+              title="GetCookies"
+              onPress={() => this._changeTest('GetCookies')}
             />
           )}
           <Button

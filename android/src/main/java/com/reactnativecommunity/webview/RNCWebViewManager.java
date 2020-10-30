@@ -788,10 +788,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
       if (!mLastLoadFailed) {
         RNCWebView reactWebView = (RNCWebView) webView;
-
+        String cookies = CookieManager.getInstance().getCookie(reactWebView.getUrl());
+        Log.d("Cookies", ""+cookies);
         reactWebView.callInjectedJavaScript();
 
-        emitFinishEvent(webView, url);
+        emitFinishEvent(webView, url, cookies);
       }
     }
 
@@ -807,7 +808,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         webView,
         new TopLoadingStartEvent(
           webView.getId(),
-          createWebViewEvent(webView, url)));
+          createWebViewEvent(webView, url, null)));
     }
 
     @Override
@@ -820,7 +821,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         final int lockIdentifier = lock.first;
         final AtomicReference<ShouldOverrideCallbackState> lockObject = lock.second;
 
-        final WritableMap event = createWebViewEvent(view, url);
+        final WritableMap event = createWebViewEvent(view, url, null);
         event.putInt("lockIdentifier", lockIdentifier);
         rncWebView.sendDirectMessage("onShouldStartLoadWithRequest", event);
 
@@ -854,7 +855,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           view,
           new TopShouldStartLoadWithRequestEvent(
             view.getId(),
-            createWebViewEvent(view, url)));
+            createWebViewEvent(view, url, null)));
         return true;
       }
     }
@@ -949,11 +950,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       super.onReceivedError(webView, errorCode, description, failingUrl);
       mLastLoadFailed = true;
 
+      Log.d("Cookies", "Url"+webView.getUrl());
+      Log.d("Cookies", "Url fail"+failingUrl);
+      String cookies = CookieManager.getInstance().getCookie(webView.getUrl());
+      Log.d("Cookies", "On error cookies "+cookies);
       // In case of an error JS side expect to get a finish event first, and then get an error event
       // Android WebView does it in the opposite way, so we need to simulate that behavior
-      emitFinishEvent(webView, failingUrl);
+      emitFinishEvent(webView, failingUrl, cookies);
 
-      WritableMap eventData = createWebViewEvent(webView, failingUrl);
+      WritableMap eventData = createWebViewEvent(webView, failingUrl, cookies);
       eventData.putDouble("code", errorCode);
       eventData.putString("description", description);
 
@@ -971,7 +976,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       super.onReceivedHttpError(webView, request, errorResponse);
 
       if (request.isForMainFrame()) {
-        WritableMap eventData = createWebViewEvent(webView, request.getUrl().toString());
+        WritableMap eventData = createWebViewEvent(webView, request.getUrl().toString(), null);
         eventData.putInt("statusCode", errorResponse.getStatusCode());
         eventData.putString("description", errorResponse.getReasonPhrase());
 
@@ -1004,7 +1009,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           return true;
         }
 
-        WritableMap event = createWebViewEvent(webView, webView.getUrl());
+        WritableMap event = createWebViewEvent(webView, webView.getUrl(), null);
         event.putBoolean("didCrash", detail.didCrash());
 
         dispatchEvent(
@@ -1016,15 +1021,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         return true;
     }
 
-    protected void emitFinishEvent(WebView webView, String url) {
+    protected void emitFinishEvent(WebView webView, String url, String cookies) {
       dispatchEvent(
         webView,
         new TopLoadingFinishEvent(
           webView.getId(),
-          createWebViewEvent(webView, url)));
+          createWebViewEvent(webView, url, cookies)));
     }
 
-    protected WritableMap createWebViewEvent(WebView webView, String url) {
+    protected WritableMap createWebViewEvent(WebView webView, String url, String cookies) {
       WritableMap event = Arguments.createMap();
       event.putDouble("target", webView.getId());
       // Don't use webView.getUrl() here, the URL isn't updated to the new value yet in callbacks
@@ -1032,6 +1037,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       event.putString("url", url);
       event.putBoolean("loading", !mLastLoadFailed && webView.getProgress() != 100);
       event.putString("title", webView.getTitle());
+      event.putString("cookies", cookies);
       event.putBoolean("canGoBack", webView.canGoBack());
       event.putBoolean("canGoForward", webView.canGoForward());
       return event;
@@ -1382,7 +1388,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             if (mRNCWebViewClient == null) {
               return;
             }
-            WritableMap data = mRNCWebViewClient.createWebViewEvent(webView, webView.getUrl());
+            WritableMap data = mRNCWebViewClient.createWebViewEvent(webView, webView.getUrl(), null);
             data.putString("data", message);
 
             if (mCatalystInstance != null) {
