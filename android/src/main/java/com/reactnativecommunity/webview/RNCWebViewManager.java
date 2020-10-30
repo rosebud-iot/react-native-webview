@@ -952,13 +952,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
       Log.d("Cookies", "Url"+webView.getUrl());
       Log.d("Cookies", "Url fail"+failingUrl);
-      String cookies = CookieManager.getInstance().getCookie(webView.getUrl());
-      Log.d("Cookies", "On error cookies "+cookies);
       // In case of an error JS side expect to get a finish event first, and then get an error event
       // Android WebView does it in the opposite way, so we need to simulate that behavior
-      emitFinishEvent(webView, failingUrl, cookies);
+      emitFinishEvent(webView, failingUrl, null);
 
-      WritableMap eventData = createWebViewEvent(webView, failingUrl, cookies);
+      WritableMap eventData = createWebViewEvent(webView, failingUrl, null);
       eventData.putDouble("code", errorCode);
       eventData.putString("description", description);
 

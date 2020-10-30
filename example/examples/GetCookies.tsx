@@ -7,8 +7,9 @@ type State = {};
 
 export default class GetCookies extends Component<Props, State> {
     state = {
-        reloaded: false,
+        restarting: false,
         cookies: null,
+        reloading: false,
     };
 
     constructor(props) {
@@ -16,40 +17,51 @@ export default class GetCookies extends Component<Props, State> {
         this.webView = React.createRef();
     }
 
+    _simulateRestart = () => {
+        this.setState({ restarting: true }, () => this.setState({ restarting: false }));
+    };
+
     render() {
-        console.log('Estado', this.state);
+        console.log('State', this.state);
         return (
-            <View style={{ height: 500 }}>
-                <WebView
-                    ref={this.webView}
-                    source={{ uri: 'https://api.virginqa.sweepr.com/login/sso' }}
-                    onNavigationStateChange={(syntheticEvent: any) => {
-                        console.log("GetCookies -> render -> Nav change", syntheticEvent)
-                    }}
-                    onLoadEnd={(syntheticEvent: any) => {
-                        const { nativeEvent } = syntheticEvent;
-                        if (nativeEvent.cookies !== null && nativeEvent.cookies.includes('JSESSIONID')) {
-                            this.setState({ cookies: nativeEvent.cookies })
-                        }
-                        console.log("GetCookies -> render -> nativeEvent", nativeEvent)
-                        if (nativeEvent.url === 'https://onlogin/') {
-                            if (nativeEvent.cookies === null) {
-                                console.log('reload');
-                                if (!this.state.reloaded) {
-                                    // this.webView.current.reload();
-                                    this.setState({ reloaded: true });
+            <>
+                {
+                    this.state.restarting ? null : (<View style={{ height: 500 }}>
+                        <WebView
+                            ref={this.webView}
+                            source={{ uri: 'https://api.virginqa.sweepr.com/login/sso' }}
+                            onNavigationStateChange={(syntheticEvent: any) => {
+                                console.log("GetCookies -> render -> Nav change", syntheticEvent)
+                            }}
+                            onLoadEnd={(syntheticEvent: any) => {
+                                const { nativeEvent } = syntheticEvent;
+                                if (nativeEvent.cookies !== null && nativeEvent.cookies.includes('JSESSIONID')) {
+                                    this.setState({ cookies: nativeEvent.cookies })
                                 }
-                            }
-                        }
-                    }}
-                    automaticallyAdjustContentInsets={false}
-                    thirdPartyCookiesEnabled={true}
-                    sharedCookiesEnabled={true}
-                    javaScriptEnabled={true}
-                    domStorageEnabled={true}
-                    useWebKit={true}
-                />
-            </View>
+                                console.log("GetCookies -> render -> nativeEvent LoadedEnd", nativeEvent)
+                                if (nativeEvent.url === 'https://onlogin/') {
+                                    if (nativeEvent.cookies === null) {
+
+                                        if (!this.state.reloading) {
+                                            console.log('reloading');
+                                            this.setState({
+                                                reloading: true,
+                                            })
+                                            this._simulateRestart();
+                                        }
+                                    }
+                                }
+                            }}
+                            automaticallyAdjustContentInsets={false}
+                            thirdPartyCookiesEnabled={true}
+                            sharedCookiesEnabled={true}
+                            javaScriptEnabled={true}
+                            domStorageEnabled={true}
+                            useWebKit={true}
+                        />
+                    </View>)
+                }
+            </>
         );
     }
 }

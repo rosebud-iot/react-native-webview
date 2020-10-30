@@ -115,7 +115,7 @@ export default class App extends Component<Props, State> {
   render() {
     const { restarting, currentTest } = this.state;
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} >
         <TouchableOpacity
           style={styles.closeKeyboardView}
           onPress={() => Keyboard.dismiss()}
@@ -184,21 +184,23 @@ export default class App extends Component<Props, State> {
           />
         </View>
 
-        {restarting ? null : (
-          <View
-            testID={`example-${currentTest.testId}`}
-            key={currentTest.title}
-            style={styles.exampleContainer}>
-            <Text style={styles.exampleTitle}>{currentTest.title}</Text>
-            <Text style={styles.exampleDescription}>
-              {currentTest.description}
-            </Text>
-            <View style={styles.exampleInnerContainer}>
-              {currentTest.render()}
+        {
+          restarting ? null : (
+            <View
+              testID={`example-${currentTest.testId}`}
+              key={currentTest.title}
+              style={styles.exampleContainer}>
+              <Text style={styles.exampleTitle}>{currentTest.title}</Text>
+              <Text style={styles.exampleDescription}>
+                {currentTest.description}
+              </Text>
+              <View style={styles.exampleInnerContainer}>
+                {currentTest.render()}
+              </View>
             </View>
-          </View>
-        )}
-      </SafeAreaView>
+          )
+        }
+      </SafeAreaView >
     );
   }
 }
