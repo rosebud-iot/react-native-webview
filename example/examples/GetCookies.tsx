@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Alert } from 'react-native';
+import { View, Alert, Text } from 'react-native';
 
 import WebView from 'react-native-webview';
 type Props = {};
@@ -10,6 +10,7 @@ export default class GetCookies extends Component<Props, State> {
         restarting: false,
         cookies: null,
         reloading: false,
+        uri: null
     };
 
     constructor(props) {
@@ -21,37 +22,53 @@ export default class GetCookies extends Component<Props, State> {
         this.setState({ restarting: true }, () => this.setState({ restarting: false }));
     };
 
+
+
     render() {
         console.log('State', this.state);
+        const NewWebView = () => {
+            return (<View style={{ height: 500 }}>
+                <Text>wtf</Text>
+                <WebView
+                    ref={this.webView}
+                    source={{ uri: this.state.uri }}
+                    onLoadEnd={(syntheticEvent: any) => {
+                        const { nativeEvent } = syntheticEvent;
+                        console.log("GetCookies -> render -> nativeEvent", nativeEvent)
+                    }}
+                    onError={(syntheticEvent) => {
+                        const { nativeEvent } = syntheticEvent;
+                        console.warn('WebView error: ', nativeEvent);
+                    }}
+                    onLoadError
+                    automaticallyAdjustContentInsets={false}
+                    thirdPartyCookiesEnabled={true}
+                    sharedCookiesEnabled={true}
+                    javaScriptEnabled={true}
+                    domStorageEnabled={true}
+                    useWebKit={true}
+                />
+            </View>)
+        }
         return (
             <>
                 {
-                    this.state.restarting ? null : (<View style={{ height: 500 }}>
+                    !this.state.uri && (<View style={{ height: 500 }}>
                         <WebView
                             ref={this.webView}
-                            source={{ uri: 'https://api.virginqa.sweepr.com/login/sso' }}
-                            onNavigationStateChange={(syntheticEvent: any) => {
-                                console.log("GetCookies -> render -> Nav change", syntheticEvent)
-                            }}
+                            source={{ uri: this.state.uri ? this.state.uri : 'https://api.virginqa.sweepr.com/login/sso' }}
                             onLoadEnd={(syntheticEvent: any) => {
                                 const { nativeEvent } = syntheticEvent;
-                                if (nativeEvent.cookies !== null && nativeEvent.cookies.includes('JSESSIONID')) {
-                                    this.setState({ cookies: nativeEvent.cookies })
-                                }
-                                console.log("GetCookies -> render -> nativeEvent LoadedEnd", nativeEvent)
-                                if (nativeEvent.url === 'https://onlogin/') {
-                                    if (nativeEvent.cookies === null) {
-
-                                        if (!this.state.reloading) {
-                                            console.log('reloading');
-                                            this.setState({
-                                                reloading: true,
-                                            })
-                                            this._simulateRestart();
-                                        }
-                                    }
+                                console.log("GetCookies -> render -> nativeEvent", nativeEvent)
+                                if (nativeEvent.url === "https://onlogin/") {
+                                    this.setState({ uri: 'https://api.virginqa.sweepr.com/login/sso' })
                                 }
                             }}
+                            onError={(syntheticEvent) => {
+                                const { nativeEvent } = syntheticEvent;
+                                console.warn('WebView error: ', nativeEvent);
+                            }}
+                            onLoadError
                             automaticallyAdjustContentInsets={false}
                             thirdPartyCookiesEnabled={true}
                             sharedCookiesEnabled={true}
@@ -60,6 +77,11 @@ export default class GetCookies extends Component<Props, State> {
                             useWebKit={true}
                         />
                     </View>)
+
+
+                }
+                {
+                    this.state.uri && <NewWebView></NewWebView>
                 }
             </>
         );

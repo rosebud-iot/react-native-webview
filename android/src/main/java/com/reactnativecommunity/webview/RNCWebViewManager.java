@@ -782,16 +782,18 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       ignoreErrFailedForThisURL = url;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onPageFinished(WebView webView, String url) {
       super.onPageFinished(webView, url);
-
+      RNCWebView reactWebView = (RNCWebView) webView;
+      String currentUrl = reactWebView.getUrl();
+      CookieManager cm = CookieManager.getInstance();
+      cm.setAcceptThirdPartyCookies(webView, true);
+      String cookies = cm.getCookie(currentUrl);
+      Log.d("Cookies", ""+cookies);
       if (!mLastLoadFailed) {
-        RNCWebView reactWebView = (RNCWebView) webView;
-        String cookies = CookieManager.getInstance().getCookie(reactWebView.getUrl());
-        Log.d("Cookies", ""+cookies);
         reactWebView.callInjectedJavaScript();
-
         emitFinishEvent(webView, url, cookies);
       }
     }
@@ -947,13 +949,19 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         return;
       }
 
+      Log.d("Cookies", "Url"+webView.getUrl());
+      Log.d("Cookies", "Url fail"+failingUrl);
+      String currentUrl = webView.getUrl();
+      String cookies = CookieManager.getInstance().getCookie(currentUrl);
+      Log.d("Cookies", ""+cookies);
+
       super.onReceivedError(webView, errorCode, description, failingUrl);
       mLastLoadFailed = true;
 
-      Log.d("Cookies", "Url"+webView.getUrl());
-      Log.d("Cookies", "Url fail"+failingUrl);
+
       // In case of an error JS side expect to get a finish event first, and then get an error event
       // Android WebView does it in the opposite way, so we need to simulate that behavior
+
       emitFinishEvent(webView, failingUrl, null);
 
       WritableMap eventData = createWebViewEvent(webView, failingUrl, null);
