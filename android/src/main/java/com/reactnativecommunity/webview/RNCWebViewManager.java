@@ -805,12 +805,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
       RNCWebView reactWebView = (RNCWebView) webView;
       reactWebView.callInjectedJavaScriptBeforeContentLoaded();
-
+      String currentUrl = reactWebView.getUrl();
+      CookieManager cm = CookieManager.getInstance();
+      String cookies = cm.getCookie(currentUrl);
+      Log.d("Cookies", ""+cookies);
       dispatchEvent(
         webView,
         new TopLoadingStartEvent(
           webView.getId(),
-          createWebViewEvent(webView, url, null)));
+          createWebViewEvent(webView, url, cookies)));
     }
 
     @Override
